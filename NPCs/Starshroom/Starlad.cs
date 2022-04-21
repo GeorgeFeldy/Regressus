@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
@@ -182,7 +182,7 @@ namespace Regressus.NPCs.Starshroom
             {
                 AITimer++;
                 alpha = MathHelper.Lerp(0, 1, AITimer / 100);
-                if (AITimer >= 100)
+                if (AITimer >= 45)
                 {
                     AITimer = 0;
                     AIState = Attack;
@@ -199,11 +199,12 @@ namespace Regressus.NPCs.Starshroom
                 {
                     NPC.Center = Vector2.Lerp(NPC.Center, new Vector2(NPC.Center.X, player.Center.Y), AITimer / 60);
                 }
-                if (AITimer > 60 && AITimer < 90)
+                if (AITimer > 60 && AITimer < 125)
                 {
-                    for (int num622 = 0; num622 < 10; num622++)
+                    for (int num622 = 0; num622 < 4; num622++)
                     {
-                        Dust.NewDust(NPC.Center, NPC.width, NPC.height, 57, NPC.velocity.X * 0.1f, NPC.velocity.Y * 0.1f, 150, default(Color), 1.2f);
+                        Dust d = Main.dust[Dust.NewDust(NPC.Center, NPC.width / 3, NPC.height / 3, 57, NPC.velocity.X * 0.1f, NPC.velocity.Y * 0.1f, 150, default(Color), 1.2f)];
+                        d.noGravity = true;
                     }
                 }
                 if (AITimer == 60)
@@ -213,14 +214,14 @@ namespace Regressus.NPCs.Starshroom
                     Vector2 vector9 = new Vector2(NPC.position.X + (NPC.width * 0.5f), NPC.position.Y + (NPC.height * 0.5f));
                     {
                         float rotation2 = (float)Math.Atan2((vector9.Y) - (player.Center.Y), (vector9.X) - (player.Center.X));
-                        NPC.velocity.X = (float)(Math.Cos(rotation2) * 45) * -1;
+                        NPC.velocity.X = (float)(Math.Cos(rotation2) * 28) * -1;
                     }
                 }
-                if (AITimer == 90)
+                if (AITimer == 145)
                 {
                     NPC.velocity = Vector2.Zero;
                 }
-                if (AITimer >= 145)
+                if (AITimer >= 185)
                     AITimer = 0;
             }
         }
