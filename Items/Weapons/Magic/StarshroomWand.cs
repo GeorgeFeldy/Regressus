@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
@@ -46,6 +46,10 @@ namespace Regressus.Items.Weapons.Magic
                 Projectile.NewProjectile(source, position, /*Utils.RotatedBy(velocity, (double)(MathHelper.ToRadians(16f) * (float)i))*/velocity, type, damage, knockback, player.whoAmI, i);
             }
             return false;
+        }
+        public override void AddRecipes()
+        {
+            CreateRecipe().AddIngredient<Items.Ammo.Starspore>(25).AddIngredient(ItemID.Mushroom, 35).AddTile(TileID.Anvils).Register();
         }
     }
 }
