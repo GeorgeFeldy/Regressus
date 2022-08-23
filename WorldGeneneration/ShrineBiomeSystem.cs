@@ -1,10 +1,16 @@
-using Microsoft.Xna.Framework;
 using System.Collections.Generic;
+using Microsoft.Xna.Framework;
+using Mono.Cecil.Cil;
+using MonoMod.Cil;
 using Terraria;
-using Terraria.GameContent.Biomes;
+using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria.ModLoader.IO;
 using Terraria.WorldBuilding;
+using Terraria.GameContent.Biomes;
+using Regressus.Items.Weapons.Magic;
+using Regressus.Items.Weapons.Summon;
+using Regressus.Items.Weapons.Ranged;
 
 namespace Regressus.WorldGeneration
 {
@@ -17,7 +23,41 @@ namespace Regressus.WorldGeneration
 
 		public override void Load()
 		{
+			IL.Terraria.WorldGen.Check3x2 += ModifiyShrineLoot; 
 			On.Terraria.GameContent.Biomes.EnchantedSwordBiome.Place += HookCountShrines;
+		}
+
+		private void ModifiyShrineLoot(ILContext il)
+		{
+			var c = new ILCursor(il);
+
+			// match frameX >= 918
+			if (!c.TryGotoNext(
+				i => i.MatchLdloc(10),  // loading of tile.frameX (local var 10)
+				i => i.MatchLdcI4(918)  // start frame coords of enchanted sword tile
+			)) return;
+
+			// match frameX <= 970
+			if (!c.TryGotoNext(
+				i => i.MatchLdloc(10),  // loading of tile.frameX (local var 10)
+				i => i.MatchLdcI4(970)  // end frame coords of enchanted sword tile
+			)) return;
+
+			// gives Terragrim a 1/2^31 chance to drop (easier than removing the branch altogether)
+			// "The chance of getting the Terragrim are low.. but never zero" 
+			if (!c.TryGotoNext(i => i.MatchLdcI4(50))) return;
+			c.Remove();
+			c.Emit(OpCodes.Ldc_I4, int.MaxValue);
+
+
+			if (!c.TryGotoNext(i => i.MatchLdcI4(ItemID.EnchantedSword))) return;
+			c.Remove();
+			c.EmitDelegate(GetShrineLootPool);
+		}
+
+		private int GetShrineLootPool()
+		{
+			return ModContent.ItemType<EnchantedTrumpet>();
 		}
 
 		// adds to a list the coordinates of every succesful shrine placement 
