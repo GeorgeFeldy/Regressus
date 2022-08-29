@@ -8,6 +8,7 @@ using Regressus.Items.Weapons.Magic;
 using Terraria.Audio;
 using Terraria.GameContent;
 using Terraria.DataStructures;
+using Regressus.Dusts;
 
 namespace Regressus.Projectiles.Magic
 {
@@ -106,8 +107,9 @@ namespace Regressus.Projectiles.Magic
 
 			if (Main.rand.NextBool(3))
 			{
-				Dust dust = Dust.NewDustDirect(Projectile.position, Projectile.width, Projectile.height, GetEnchantedDustType() , 0f, 0f, 80);
+				Dust dust = Dust.NewDustDirect(Projectile.position, Projectile.width, Projectile.height, ModContent.DustType<TintableEnchantedDust>(), 0f, 0f, 80);
 				dust.noGravity = true;
+				dust.color = GetDrawColor(false);
 				dust.velocity *= 0.2f;
 			}
 			return false;
@@ -117,8 +119,9 @@ namespace Regressus.Projectiles.Magic
 		{
 			for (int i = 0; i < 5; i++)
 			{
-				int dust = Dust.NewDust(Projectile.position, Projectile.width, Projectile.height, GetEnchantedDustType(), 0f, 0f, 80, default, 1.5f);
-				Main.dust[dust].noGravity = true;
+				Dust dust = Dust.NewDustDirect(Projectile.position, Projectile.width, Projectile.height, ModContent.DustType<TintableEnchantedDust>(), 0f, 0f, 80, default, 1.5f);
+				dust.color = GetDrawColor(false);
+				dust.noGravity = true;
 			}
 		}
 
@@ -127,18 +130,18 @@ namespace Regressus.Projectiles.Magic
 		{
 			Texture2D texture = TextureAssets.Projectile[Type].Value;
 			SpriteEffects effect = Projectile.spriteDirection == 1 ? SpriteEffects.None : SpriteEffects.FlipHorizontally;
-			Main.EntitySpriteDraw(texture, Projectile.Center - Main.screenPosition, texture.Frame(1, 3, frameY: Projectile.frame), GetDrawColor(lightColor), Projectile.rotation, Projectile.Size / 2, 1f, effect, 0);
+			Main.EntitySpriteDraw(texture, Projectile.Center - Main.screenPosition, texture.Frame(1, 3, frameY: Projectile.frame), GetDrawColor(), Projectile.rotation, Projectile.Size / 2, 1f, effect, 0);
 
 			return false;
 		}
 
-		private Color GetDrawColor(Color lightColor)
+		private Color GetDrawColor(bool updateColor = true)
 		{
 			float cyclePeriod = 20f;
 			float cycle = (float)(Main.timeForVisualEffects % cyclePeriod / cyclePeriod);
 			Color color = Color.Lerp(CurrentColor, NextColor, cycle);
 
-			if (cycle >= 0.95f)
+			if (cycle >= 0.95f && updateColor)
 			{
 				CurrentColor = NextColor;
 				GetNextColor();
@@ -157,12 +160,6 @@ namespace Regressus.Projectiles.Magic
 			while (CurrentColor == NextColor);
 		}
 
-		private int GetEnchantedDustType() => Main.rand.Next(3) switch
-												{
-													0 => 15, // Magic dust 
-													1 => 57, // Fallen star dust 1 
-													_ => 58  // Fallen star dust 2
-												}; 
 	}
 }
 

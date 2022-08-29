@@ -17,7 +17,7 @@ namespace Regressus.NPCs.Critters
     {
         public override void SetStaticDefaults()
         {
-            DisplayName.SetDefault("Night Wisp");
+            DisplayName.SetDefault("Enchanted Wisp");
             Main.npcFrameCount[NPC.type] = 6;
         }
         public override void SetBestiary(Terraria.GameContent.Bestiary.BestiaryDatabase database, Terraria.GameContent.Bestiary.BestiaryEntry bestiaryEntry)
