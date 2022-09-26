@@ -5,12 +5,14 @@ using Terraria.ModLoader;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 using Terraria.GameContent;
-using Regressus.Projectiles.Minibosses.Vargant;
+using Regressus.Projectiles.Minibosses.Vagrant;
 using Terraria.DataStructures;
 using Regressus.Projectiles;
 using ReLogic.Content;
 using Terraria.GameContent.Bestiary;
-namespace Regressus.NPCs.Bosses.Vargant
+using Regressus.Projectiles.Oracle;
+
+namespace Regressus.NPCs.Bosses.Vagrant
 {
     public class VoltageVargant : ModNPC
     {
@@ -19,6 +21,7 @@ namespace Regressus.NPCs.Bosses.Vargant
             DisplayName.SetDefault("Voltage Vagrant");
             Main.npcFrameCount[Type] = 11;
             NPCID.Sets.TrailCacheLength[Type] = 5;
+            NPCID.Sets.ShouldBeCountedAsBoss[Type] = true;
             NPCID.Sets.TrailingMode[Type] = 0;
             NPCID.Sets.BossBestiaryPriority.Add(Type);
         }
@@ -35,8 +38,7 @@ namespace Regressus.NPCs.Bosses.Vargant
             NPC.noGravity = true;
             NPC.knockBackResist = 0f;
             NPC.noTileCollide = true;
-            NPC.boss = true;
-            Music = MusicLoader.GetMusicSlot(Mod, "Sounds/Music/voltageVagrant");
+            NPC.boss = false;
         }
         public override void FindFrame(int frameHeight)
         {
@@ -96,14 +98,14 @@ namespace Regressus.NPCs.Bosses.Vargant
                 BestiaryDatabaseNPCsPopulator.CommonTags.SpawnConditions.Visuals.Moon,
                 BestiaryDatabaseNPCsPopulator.CommonTags.SpawnConditions.Visuals.Rain,
 
-                new FlavorTextBestiaryInfoElement("A giant moth that can conjure storms in a mere instant. Abandoned after the Great War, it wanders the lands in search of purpose."),
+                new FlavorTextBestiaryInfoElement("A gigantic moth that can conjure storms in a mere instant. Abandoned after the Great War, it wanders the lands in search of purpose."),
             });
         }
 
         public override bool PreDraw(SpriteBatch spriteBatch, Vector2 screenPos, Color drawColor)
         {
             Texture2D texture = TextureAssets.Npc[Type].Value;
-            Texture2D glowTex = RegreUtils.GetTexture("NPCs/Bosses/Vargant/VoltageVargant_Glow");
+            Texture2D glowTex = RegreUtils.GetTexture("NPCs/Bosses/Vagrant/VoltageVargant_Glow");
             SpriteEffects effects = NPC.spriteDirection == -1 ? SpriteEffects.None : SpriteEffects.FlipHorizontally;
 
 
@@ -194,13 +196,15 @@ namespace Regressus.NPCs.Bosses.Vargant
         {
             return spawnInfo.Player.ZoneOverworldHeight && spawnInfo.Player.ZonePurity && !NPC.AnyNPCs(ModContent.NPCType<VoltageVargant>()) ? 0.01f : 0;
         }
+        bool yes;
         int nextAttack = Rain;
+        Vector2[] random = new Vector2[4];
+        Vector2 arena;
         public override void AI()
         {
+            if (AIState != Rain)
+                NPC.damage = 0;
             Player player = Main.player[NPC.target];
-            Main.StartRain();
-            Main._shouldUseStormMusic = true;
-            Main.windSpeedTarget = 1f;
             if (Main.dayTime)
             {
                 AIState = -1;
@@ -210,6 +214,12 @@ namespace Regressus.NPCs.Bosses.Vargant
                 {
                     NPC.timeLeft = 10;
                 }
+            }
+            if (yes)
+            {
+                Main.StartRain();
+                Main._shouldUseStormMusic = true;
+                Main.windSpeedTarget = 1f;
             }
             if (!player.active || player.dead)
             {
@@ -242,7 +252,12 @@ namespace Regressus.NPCs.Bosses.Vargant
                 NPC.Center = Vector2.Lerp(NPC.Center, player.Center, 0.0005f);
                 if (NPC.life < NPC.lifeMax)
                 {
+                    Main.StartRain();
+                    Main._shouldUseStormMusic = true;
+                    Main.windSpeedTarget = 1f;
                     AIState = Intro;
+                    NPC.boss = true;
+                    Music = MusicLoader.GetMusicSlot(Mod, "Sounds/Music/voltageVagrant");
                 }
             }
             if (AIState == Intro)
@@ -250,6 +265,12 @@ namespace Regressus.NPCs.Bosses.Vargant
                 AITimer++;
                 if (AITimer == 1)
                 {
+                    NPC.boss = true;
+                    Music = MusicLoader.GetMusicSlot(Mod, "Sounds/Music/voltageVagrant");
+                    yes = true;
+                    Main.StartRain();
+                    Main._shouldUseStormMusic = true;
+                    Main.windSpeedTarget = 1f;
                     RegreSystem.ScreenShakeAmount = 20f;
                     RegreUtils.SetBossTitle(160, "Voltage Vagrant", Color.White, "Bringer of Storms", BossTitleStyleID.Vagrant);
                     RegreSystem.ChangeCameraPos(NPC.Center, 160);
@@ -264,7 +285,7 @@ namespace Regressus.NPCs.Bosses.Vargant
             if (AIState == Idle)
             {
                 AITimer++;
-                NPC.Center = Vector2.Lerp(NPC.Center, player.Center, 0.025f);
+                NPC.Center = Vector2.Lerp(NPC.Center, player.Center, 0.015f);
                 if (AITimer >= 180)
                 {
                     AIState = nextAttack;
@@ -277,13 +298,13 @@ namespace Regressus.NPCs.Bosses.Vargant
                 if (!NPC.AnyNPCs(ModContent.NPCType<OrbitingHail>()))
                     AITimer++;
 
-                NPC.Center = Vector2.Lerp(NPC.Center, player.Center - Vector2.UnitY * 100, 0.025f);
+                NPC.Center = Vector2.Lerp(NPC.Center, player.Center - Vector2.UnitY * 200, 0.025f);
                 NPC.dontTakeDamage = NPC.AnyNPCs(ModContent.NPCType<OrbitingHail>());
                 if (AITimer == 1)
                 {
-                    for (int i = 0; i < 7; i++)
+                    for (int i = 0; i < 4; i++)
                     {
-                        float angle = 2f * (float)Math.PI / 7f * i;
+                        float angle = 2f * (float)Math.PI / 4f * i;
                         Point pos = new Vector2(NPC.Center.X + (float)Math.Cos(angle) * 100, NPC.Center.Y + (float)Math.Sin(angle) * 100).ToPoint();
                         NPC.NewNPC(NPC.GetSource_FromAI(), pos.X, pos.Y, ModContent.NPCType<OrbitingHail>(), 0, NPC.whoAmI, angle);
                     }
@@ -323,7 +344,18 @@ namespace Regressus.NPCs.Bosses.Vargant
                     AITimer = 239;
                 if (AITimer == 1)
                 {
+                    arena = new Vector2(Main.screenPosition.X, player.Center.Y);
                     NPC.ai[3] = 1;
+                }
+                if (AITimer > 1)
+                {
+                    if (AITimer % 5 == 0)
+                    {
+                        Vector2 arena2 = arena + new Vector2(Main.screenWidth, 0);
+                        Projectile a = Projectile.NewProjectileDirect(NPC.GetSource_FromAI(), arena2, Vector2.Zero, ModContent.ProjectileType<Lightning>(), 1000, 0);
+                        Projectile b = Projectile.NewProjectileDirect(NPC.GetSource_FromAI(), arena, Vector2.Zero, ModContent.ProjectileType<Lightning>(), 1000, 0);
+                        a.ai[1] = b.ai[1] = 1.75f;
+                    }
                 }
                 else if (AITimer == 101)
                 {
@@ -333,12 +365,12 @@ namespace Regressus.NPCs.Bosses.Vargant
                 {
                     NPC.damage = 0;
                     NPC.velocity = Vector2.Zero;
-                    NPC.Center = Vector2.Lerp(NPC.Center, player.Center + Vector2.UnitX * 550 * NPC.ai[3], 0.035f);
+                    NPC.Center = Vector2.Lerp(NPC.Center, (player.Center + (Vector2.UnitX * 550) * NPC.ai[3]), 0.035f);
                 }
                 //NPC.Center = new Vector2(NPC.Center.X, Vector2.Lerp(NPC.Center, player.Center, 0.035f).Y);
                 if (AITimer >= 35)
                 {
-                    if (++AITimer2 >= 6)
+                    if (++AITimer2 >= 8)
                     {
                         AITimer2 = 0;
                         int rain = 0;
@@ -355,12 +387,13 @@ namespace Regressus.NPCs.Bosses.Vargant
                                 break;
                         }
                         Vector2 random = new Vector2(Main.screenPosition.X + Main.screenWidth * Main.rand.NextFloat(), Main.screenPosition.Y);
-                        Projectile.NewProjectile(NPC.GetSource_FromAI(), random, new Vector2(Main.windSpeedCurrent * 4, 5), rain, 10, 0, Main.myPlayer);
+                        Projectile.NewProjectile(NPC.GetSource_FromAI(), random, new Vector2(Main.windSpeedCurrent * 2, 5), rain, 10, 0, Main.myPlayer);
                     }
                 }
 
                 if ((AITimer == 100 || AITimer == 200) && !stunned)
                 {
+                    NPC.rotation = 0;
                     Terraria.Audio.SoundEngine.PlaySound(SoundID.ForceRoar);
                     NPC.damage = 15;
                     NPC.velocity.X *= 0.98f;
@@ -376,6 +409,7 @@ namespace Regressus.NPCs.Bosses.Vargant
                     NPC.damage = 10;
                     AIState = Idle;
                     nextAttack = Hail;
+                    NPC.rotation = 0;
                     AITimer = 0;
                     AITimer2 = 0;
                 }
@@ -389,13 +423,34 @@ namespace Regressus.NPCs.Bosses.Vargant
                     Terraria.Audio.SoundEngine.PlaySound(SoundID.ForceRoar);
                 if (AITimer > 50)
                 {
-                    if (++AITimer2 >= 15)
+                    AITimer2++;
+                    if (AITimer2 == 10)
                     {
-                        Vector2 __random = new Vector2(Main.screenPosition.X + Main.screenWidth * Main.rand.NextFloat(), Main.screenPosition.Y);
+                        random[3] = player.Center;
+                        for (int i = 0; i < 3; i++)
+                        {
+                            random[i] = new Vector2(Main.screenPosition.X + Main.screenWidth * Main.rand.NextFloat(), player.Center.Y);
+                            int projectilea = Projectile.NewProjectile(NPC.GetSource_FromThis(), random[i], -Vector2.UnitY, ModContent.ProjectileType<OracleTelegraphLine>(), 0, 0, player.whoAmI, NPC.whoAmI);
+                            int projectil2e = Projectile.NewProjectile(NPC.GetSource_FromThis(), random[i], Vector2.UnitY, ModContent.ProjectileType<OracleTelegraphLine>(), 0, 0, player.whoAmI, NPC.whoAmI);
+                            Main.projectile[projectilea].timeLeft = Main.projectile[projectil2e].timeLeft = 36;
+                        }
+                        int projectile = Projectile.NewProjectile(NPC.GetSource_FromThis(), random[3], -Vector2.UnitY, ModContent.ProjectileType<OracleTelegraphLine>(), 0, 0, player.whoAmI, NPC.whoAmI);
+                        int projectile3 = Projectile.NewProjectile(NPC.GetSource_FromThis(), random[3], Vector2.UnitY, ModContent.ProjectileType<OracleTelegraphLine>(), 0, 0, player.whoAmI, NPC.whoAmI);
+                        Main.projectile[projectile].timeLeft = 36;
+                        Main.projectile[projectile3].timeLeft = 36;
+                    }
+                    if (AITimer2 == 60)
+                    {
+                        RegreSystem.ScreenShakeAmount = 5f;
                         AITimer2 = 0;
+                        for (int i = 0; i < 3; i++)
+                        {
+                            Projectile.NewProjectile(NPC.GetSource_FromAI(), random[i], Vector2.Zero, ModContent.ProjectileType<Lightning>(), 15, 0);
+                        }
+                        Projectile.NewProjectile(NPC.GetSource_FromAI(), random[3], Vector2.Zero, ModContent.ProjectileType<Lightning>(), 15, 0);
                     }
                 }
-                if (AITimer >= 210)
+                if (AITimer >= 290)
                 {
                     AIState = Idle;
                     nextAttack = Hail2;
@@ -406,7 +461,7 @@ namespace Regressus.NPCs.Bosses.Vargant
             else if (AIState == Hail2)
             {
                 AITimer++;
-                if (++AITimer2 >= 70)
+                if (++AITimer2 >= 100)
                 {
                     for (int i = 0; i < 7; i++)
                     {
@@ -419,7 +474,7 @@ namespace Regressus.NPCs.Bosses.Vargant
                 }
 
 
-                if (AITimer >= 210)
+                if (AITimer >= 200)
                 {
                     AIState = Idle;
                     nextAttack = Rain;
