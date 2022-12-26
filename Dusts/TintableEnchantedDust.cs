@@ -19,30 +19,20 @@ namespace Regressus.Dusts
 
         public override bool Update(Dust dust)
         {
-			dust.velocity.Y *= 0.98f;
-			dust.velocity.X *= 0.98f;
+			dust.velocity *= 0.98f;
+			int rand = Main.rand.Next(3);
 
-			int rand = Main.rand.Next(3);	
+			dust.scale *= 0.95f;
+ 
+			if (dust.scale < 0.2f)
+				dust.active = false;
 
-			if (!dust.noLightEmittence)
-			{
-				float light = dust.scale;
-				if (rand != 0)
-					light = dust.scale * 0.8f;
+            float r = dust.color.R / 255;
+            float g = dust.color.G / 255;
+            float b = dust.color.B / 255;
 
-				if (dust.noLight)
-					dust.velocity *= 0.95f;
+            Lighting.AddLight((int)(dust.position.X / 16f), (int)(dust.position.Y / 16f), r, g, b);
 
-				if (light > 1f)
-					light = 1f;
-
-				if (rand == 0)
-					Lighting.AddLight((int)(dust.position.X / 16f), (int)(dust.position.Y / 16f), light * 0.45f, light * 0.55f, light);
-				else if (rand == 1)
-					Lighting.AddLight((int)(dust.position.X / 16f), (int)(dust.position.Y / 16f), light * 0.95f, light * 0.95f, light * 0.45f);
-				else if (rand == 2)
-					Lighting.AddLight((int)(dust.position.X / 16f), (int)(dust.position.Y / 16f), light, light * 0.55f, light * 0.75f);
-			}
 
 			return false;
 

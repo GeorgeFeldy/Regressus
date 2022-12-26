@@ -4,6 +4,8 @@ using Terraria.ModLoader;
 using Regressus.Projectiles.Magic;
 using Terraria.DataStructures;
 using Microsoft.Xna.Framework;
+using System;
+using Terraria.Audio;
 
 namespace Regressus.Items.Weapons.Magic
 {
@@ -31,11 +33,28 @@ namespace Regressus.Items.Weapons.Magic
         }
         public override bool Shoot(Player player, EntitySource_ItemUse_WithAmmo source, Vector2 position, Vector2 velocity, int type, int damage, float knockback)
         {
-            // TODO:
-            //  add here speed modifier based on mouse position
-            //  pass pitch modifier to proj.ai[0]
-            //  pass 1f to proj.ai[1] to play sound
-            Projectile.NewProjectile(source, position, velocity, type, damage, knockback, player.whoAmI); 
+			Vector2 pointPoisition = player.RotatedRelativePoint(player.MountedCenter, reverseRotation: true);
+            float pointX = Main.mouseX + Main.screenPosition.X - pointPoisition.X;
+            float pointY = Main.mouseY + Main.screenPosition.Y - pointPoisition.Y;
+            float zoomScale = Main.screenHeight / Main.GameViewMatrix.Zoom.Y;
+
+            float pitch = (float)Math.Sqrt(pointX * pointX + pointY * pointY);
+            pitch /= zoomScale / 2f;
+            if (pitch > 1f)
+                pitch = 1f;
+
+            float speedX = pointX * 0.02f; 
+            float speedY = pointY * 0.02f;
+            velocity = new Vector2(speedX, speedY);
+ 
+            pitch = pitch * 2f - 1f;
+            Math.Clamp(pitch, -1f, 1f);
+
+            pitch = (float)Math.Round(pitch * (float)Player.musicNotes);
+            pitch /= Player.musicNotes;
+
+
+            Projectile.NewProjectile(source, position, velocity, type, damage, knockback, player.whoAmI, pitch, 1f); 
             return false;
         }
 

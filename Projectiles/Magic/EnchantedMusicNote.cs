@@ -87,7 +87,7 @@ namespace Regressus.Projectiles.Magic
 			Projectile.aiStyle = ProjAIStyleID.MusicNote; // needed for bouncing 
 			Projectile.friendly = true;
 			Projectile.alpha = 100;
-			Projectile.light = 0.3f;
+			//Projectile.light = 0.3f;
 			Projectile.penetrate = -1;
 			Projectile.timeLeft = 360; // was 180
 			Projectile.DamageType = DamageClass.Magic;
@@ -95,22 +95,24 @@ namespace Regressus.Projectiles.Magic
 
 		public override bool PreAI()
 		{
-			Projectile.rotation = Projectile.velocity.X * 0.1f;
+			Projectile.rotation = Projectile.velocity.X * 0.04f;
 			Projectile.spriteDirection = -Projectile.direction;
 
 			if (Projectile.ai[1] == 1f)
 			{
 				Projectile.ai[1] = 0f;
-				Main.musicPitch = Projectile.ai[0];
-				SoundEngine.PlaySound(SoundID.Item26, Projectile.position);
+  				SoundStyle doot = new SoundStyle("Regressus/Sounds/Custom/TrumpetSkull");
+				SoundEngine.PlaySound(doot with { Pitch = Projectile.ai[0] });
 			}
+
+			Lighting.AddLight(Projectile.Center, GetDrawColor().ToVector3());
 
 			if (Main.rand.NextBool(3))
 			{
 				Dust dust = Dust.NewDustDirect(Projectile.position, Projectile.width, Projectile.height, ModContent.DustType<TintableEnchantedDust>(), 0f, 0f, 80);
 				dust.noGravity = true;
-				dust.color = GetDrawColor(false);
-				dust.velocity *= 0.2f;
+				dust.color = GetDrawColor();
+     			dust.velocity *= 0.2f;
 			}
 			return false;
 		}
@@ -120,7 +122,7 @@ namespace Regressus.Projectiles.Magic
 			for (int i = 0; i < 5; i++)
 			{
 				Dust dust = Dust.NewDustDirect(Projectile.position, Projectile.width, Projectile.height, ModContent.DustType<TintableEnchantedDust>(), 0f, 0f, 80, default, 1.5f);
-				dust.color = GetDrawColor(false);
+				dust.color = GetDrawColor();
 				dust.noGravity = true;
 			}
 		}
@@ -130,12 +132,12 @@ namespace Regressus.Projectiles.Magic
 		{
 			Texture2D texture = TextureAssets.Projectile[Type].Value;
 			SpriteEffects effect = Projectile.spriteDirection == 1 ? SpriteEffects.None : SpriteEffects.FlipHorizontally;
-			Main.EntitySpriteDraw(texture, Projectile.Center - Main.screenPosition, texture.Frame(1, 3, frameY: Projectile.frame), GetDrawColor(), Projectile.rotation, Projectile.Size / 2, 1f, effect, 0);
+			Main.EntitySpriteDraw(texture, Projectile.Center - Main.screenPosition, texture.Frame(1, 3, frameY: Projectile.frame), GetDrawColor(updateColor: true), Projectile.rotation, Projectile.Size / 2, 1f, effect, 0);
 
 			return false;
 		}
 
-		private Color GetDrawColor(bool updateColor = true)
+		private Color GetDrawColor(bool updateColor = false)
 		{
 			float cyclePeriod = 20f;
 			float cycle = (float)(Main.timeForVisualEffects % cyclePeriod / cyclePeriod);
